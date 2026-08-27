@@ -1,0 +1,38 @@
+# Configurações e segredos locais
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+
+# Node / Vite
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Editores e sistema operacional
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs e temporários
+*.log
+*.tmp
+*.swp
+
+# Backups locais do banco
+backups/
+*.sql
+*.dump
+
