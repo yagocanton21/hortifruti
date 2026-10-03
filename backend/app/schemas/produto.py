@@ -113,3 +113,11 @@ class HistoricoPrecosPage(BaseModel):
     tamanho: int
     total: int
     total_paginas: int
+
+
+class ProdutosPage(BaseModel):
+    itens: list[ProdutoResponse]
+    pagina: int
+    tamanho: int
+    total: int
+    total_paginas: int

@@ -2,7 +2,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.historico_preco import HistoricoPreco
-from app.models.produto import Produto
+from app.models.produto import Produto, UnidadeVenda
 from app.schemas.produto import ProdutoCreate, ProdutoPatch, ProdutoUpdate
 
 
@@ -19,7 +19,10 @@ def listar_produtos(
     db: Session,
     pesquisa: str | None = None,
     ativo: bool | None = None,
-) -> list[Produto]:
+    unidade_venda: UnidadeVenda | None = None,
+    pagina: int | None = None,
+    tamanho: int = 15,
+) -> tuple[list[Produto], int]:
     consulta = select(Produto)
 
     if pesquisa:
@@ -34,8 +37,17 @@ def listar_produtos(
     if ativo is not None:
         consulta = consulta.where(Produto.ativo == ativo)
 
+    if unidade_venda is not None:
+        consulta = consulta.where(Produto.unidade_venda == unidade_venda)
+
+    total = db.scalar(select(func.count()).select_from(consulta.subquery())) or 0
+
     consulta = consulta.order_by(Produto.nome)
-    return list(db.scalars(consulta).all())
+
+    if pagina is not None:
+        consulta = consulta.offset((pagina - 1) * tamanho).limit(tamanho)
+
+    return list(db.scalars(consulta).all()), total
 
 
 def buscar_produto(db: Session, produto_id: int) -> Produto | None:

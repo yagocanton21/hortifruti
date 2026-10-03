@@ -16,12 +16,35 @@ function ProdutoForm({ valoresIniciais, aoSalvar, textoBotao }) {
 
   async function salvar(event) {
     event.preventDefault()
-    setSalvando(true)
     setErro('')
+
+    const cod = formulario.codigo_interno.trim()
+    const nome = formulario.nome.trim()
+    const precoLimpo = formulario.preco_atual.toString().replace(',', '.').trim()
+    const precoNum = parseFloat(precoLimpo)
+
+    if (!cod) {
+      setErro('O código interno não pode estar em branco.')
+      return
+    }
+
+    if (!nome) {
+      setErro('O nome do produto não pode estar em branco.')
+      return
+    }
+
+    if (isNaN(precoNum) || precoNum < 0) {
+      setErro('O preço deve ser um valor válido maior ou igual a R$ 0,00.')
+      return
+    }
+
+    setSalvando(true)
     try {
       await aoSalvar({
         ...formulario,
-        preco_atual: formulario.preco_atual.replace(',', '.'),
+        codigo_interno: cod,
+        nome,
+        preco_atual: precoLimpo,
       })
     } catch (error) {
       setErro(error.message)

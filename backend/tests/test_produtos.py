@@ -117,3 +117,31 @@ def test_produto_inexistente_retorna_404(client):
     response = client.get("/api/produtos/999999999")
 
     assert response.status_code == 404
+
+
+def test_listar_produtos_com_paginacao_e_filtro(client):
+    # cadastrar produtos adicionais
+    client.post(
+        "/api/produtos",
+        json={"codigo_interno": "PAG01", "nome": "Abacaxi", "unidade_venda": "UN", "preco_atual": "5.00", "ativo": True},
+    )
+    client.post(
+        "/api/produtos",
+        json={"codigo_interno": "PAG02", "nome": "Banana", "unidade_venda": "KG", "preco_atual": "6.00", "ativo": True},
+    )
+
+    # paginado
+    response = client.get("/api/produtos?pagina=1&tamanho=1")
+    assert response.status_code == 200
+    dados = response.json()
+    assert "itens" in dados
+    assert dados["pagina"] == 1
+    assert dados["tamanho"] == 1
+    assert len(dados["itens"]) == 1
+    assert dados["total"] >= 2
+
+    # filtro por unidade
+    response_un = client.get("/api/produtos?unidade_venda=UN")
+    assert response_un.status_code == 200
+    for item in response_un.json():
+        assert item["unidade_venda"] == "UN"

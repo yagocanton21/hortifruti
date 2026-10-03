@@ -5,12 +5,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.models.produto import Produto
+from app.models.produto import Produto, UnidadeVenda
 from app.schemas.produto import (
     HistoricoPrecosPage,
     ProdutoCreate,
     ProdutoPatch,
     ProdutoResponse,
+    ProdutosPage,
     ProdutoUpdate,
 )
 from app.services import produto_service
@@ -45,13 +46,33 @@ def criar_produto(dados: ProdutoCreate, db: DbSession) -> ProdutoResponse:
     return salvar_ou_conflito(lambda: produto_service.criar_produto(db, dados), db)
 
 
-@router.get("", response_model=list[ProdutoResponse])
+@router.get("", response_model=ProdutosPage | list[ProdutoResponse])
 def listar_produtos(
     db: DbSession,
     pesquisa: Annotated[str | None, Query(max_length=120)] = None,
     ativo: bool | None = None,
-) -> list[ProdutoResponse]:
-    return produto_service.listar_produtos(db, pesquisa=pesquisa, ativo=ativo)
+    unidade_venda: Annotated[UnidadeVenda | None, Query()] = None,
+    pagina: Annotated[int | None, Query(ge=1)] = None,
+    tamanho: Annotated[int, Query(ge=1, le=100)] = 6,
+) -> ProdutosPage | list[ProdutoResponse]:
+    itens, total = produto_service.listar_produtos(
+        db,
+        pesquisa=pesquisa,
+        ativo=ativo,
+        unidade_venda=unidade_venda,
+        pagina=pagina,
+        tamanho=tamanho,
+    )
+    if pagina is not None:
+        total_paginas = (total + tamanho - 1) // tamanho if total > 0 else 1
+        return ProdutosPage(
+            itens=itens,
+            pagina=pagina,
+            tamanho=tamanho,
+            total=total,
+            total_paginas=total_paginas,
+        )
+    return [ProdutoResponse.model_validate(item) for item in itens]
 
 
 @router.get("/{produto_id}", response_model=ProdutoResponse)
